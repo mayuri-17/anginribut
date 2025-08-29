@@ -1,4 +1,4 @@
-From 523f5cdf33394c334ac5534d502c774f5adbad2c Mon Sep 17 00:00:00 2001
+From 0b08e44c71d9b2bd5b46b54721ee156a8c565ab8 Mon Sep 17 00:00:00 2001
 From: "M. Faris" <90097027+rsuntk@users.noreply.github.com>
 Date: Sat, 16 Aug 2025 14:44:57 +0700
 Subject: [PATCH] Susfs-Patch
@@ -623,7 +623,7 @@ index 772bae69dbbb..313538342a8e 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 357336339610..6e62fee8fe91 100644
+index 87a757b2e06c..ace8dc7a264f 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -26,10 +26,36 @@
@@ -918,7 +918,7 @@ index 357336339610..6e62fee8fe91 100644
  	lock_mount_hash();
  	list_add_tail(&mnt->mnt_instance, &sb->s_mounts);
  	unlock_mount_hash();
-@@ -1766,6 +1969,9 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
+@@ -1744,6 +1947,9 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
  					int flag)
  {
  	struct mount *res, *p, *q, *r, *parent;
@@ -928,7 +928,7 @@ index 357336339610..6e62fee8fe91 100644
  
  	if (!(flag & CL_COPY_UNBINDABLE) && IS_MNT_UNBINDABLE(mnt))
  		return ERR_PTR(-EINVAL);
-@@ -1782,6 +1988,9 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
+@@ -1760,6 +1966,9 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
  	p = mnt;
  	list_for_each_entry(r, &mnt->mnt_mounts, mnt_child) {
  		struct mount *s;
@@ -938,7 +938,7 @@ index 357336339610..6e62fee8fe91 100644
  		if (!is_subdir(r->mnt_mountpoint, dentry))
  			continue;
  
-@@ -1811,6 +2020,13 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
+@@ -1789,6 +1998,13 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
  			q = clone_mnt(p, p->mnt.mnt_root, flag);
  			if (IS_ERR(q))
  				goto out;
@@ -952,7 +952,7 @@ index 357336339610..6e62fee8fe91 100644
  			lock_mount_hash();
  			list_add_tail(&q->mnt_list, &res->mnt_list);
  			attach_mnt(q, parent, p->mnt_mp);
-@@ -2276,6 +2492,27 @@ static int do_loopback(struct path *path, const char *old_name,
+@@ -2254,6 +2470,27 @@ static int do_loopback(struct path *path, const char *old_name,
  		umount_tree(mnt, UMOUNT_SYNC);
  		unlock_mount_hash();
  	}
@@ -980,7 +980,7 @@ index 357336339610..6e62fee8fe91 100644
  out2:
  	unlock_mount(mp);
  out:
-@@ -2875,6 +3112,15 @@ long do_mount(const char *dev_name, const char __user *dir_name,
+@@ -2853,6 +3090,15 @@ long do_mount(const char *dev_name, const char __user *dir_name,
  	else
  		retval = do_new_mount(&path, type_page, sb_flags, mnt_flags,
  				      dev_name, data_page);
@@ -996,7 +996,7 @@ index 357336339610..6e62fee8fe91 100644
  dput_out:
  	path_put(&path);
  	return retval;
-@@ -2952,6 +3198,10 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -2930,6 +3176,10 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	struct mount *old;
  	struct mount *new;
  	int copy_flags;
@@ -1007,7 +1007,7 @@ index 357336339610..6e62fee8fe91 100644
  
  	BUG_ON(!ns);
  
-@@ -2971,6 +3221,11 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -2949,6 +3199,11 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE | CL_UNPRIVILEGED;
@@ -1019,7 +1019,7 @@ index 357336339610..6e62fee8fe91 100644
  	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
  	if (IS_ERR(new)) {
  		namespace_unlock();
-@@ -2987,6 +3242,12 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -2965,6 +3220,12 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	 */
  	p = old;
  	q = new;
@@ -1032,7 +1032,7 @@ index 357336339610..6e62fee8fe91 100644
  	while (p) {
  		q->mnt_ns = new_ns;
  		new_ns->mounts++;
-@@ -3004,9 +3265,19 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -2982,9 +3243,19 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  		q = next_mnt(q, new);
  		if (!q)
  			break;
@@ -1052,7 +1052,7 @@ index 357336339610..6e62fee8fe91 100644
  	namespace_unlock();
  
  	if (rootmnt)
-@@ -3553,3 +3824,37 @@ const struct proc_ns_operations mntns_operations = {
+@@ -3531,3 +3802,37 @@ const struct proc_ns_operations mntns_operations = {
  	.install	= mntns_install,
  	.owner		= mntns_owner,
  };
@@ -3535,31 +3535,32 @@ index b8ec1dbd1be5..6c48a53a88ea 100644
  }
  
 diff --git a/kernel/sys.c b/kernel/sys.c
-index fcc95ad7783d..fb0b73e9547d 100644
+index 67a178a3169f..bc7ffe6f1022 100644
 --- a/kernel/sys.c
 +++ b/kernel/sys.c
-@@ -1266,6 +1266,9 @@ static int override_release(char __user *release, size_t len)
- #define FAKE_KERNEL_VER	"6.12.200"
- #endif
- #endif
+@@ -1251,6 +1251,10 @@ static int override_release(char __user *release, size_t len)
+ 	return ret;
+ }
+ 
 +#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
 +extern void susfs_spoof_uname(struct new_utsname* tmp);
 +#endif
- 
++
  SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
  {
-@@ -1284,6 +1287,9 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
- 				current->comm, current->pid, tmp.release);
- 		}
+ 	struct new_utsname tmp;
+@@ -1264,6 +1268,9 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
+ 		pr_debug("fake uname: %s/%d release=%s\n",
+ 			 current->comm, current->pid, tmp.release);
  	}
-+#endif
 +#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
 +	susfs_spoof_uname(&tmp);
- #endif
++#endif
  	up_read(&uts_sem);
  	if (copy_to_user(name, &tmp, sizeof(tmp)))
+ 		return -EFAULT;
 diff --git a/security/selinux/avc.c b/security/selinux/avc.c
-index 880ad2ce30a3..e23c0f79951c 100644
+index b3f7c4790922..68fd9ca8a571 100644
 --- a/security/selinux/avc.c
 +++ b/security/selinux/avc.c
 @@ -44,6 +44,12 @@
@@ -3606,5 +3607,5 @@ index 880ad2ce30a3..e23c0f79951c 100644
  	audit_log_format(ab, " tclass=%s", secclass_map[tclass-1].name);
  }
 -- 
-2.51.0
+2.50.1
 

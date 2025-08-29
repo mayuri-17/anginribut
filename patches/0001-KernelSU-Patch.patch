@@ -1,4 +1,4 @@
-From 8ef73c9077f73ed83ce88fa061d7bce3a2436031 Mon Sep 17 00:00:00 2001
+From 22fa6e583787ac98c14abab08752bad859a7fa6f Mon Sep 17 00:00:00 2001
 From: wulan17 <wulan17@komodos.id>
 Date: Wed, 11 Dec 2024 23:28:08 +0700
 Subject: [PATCH] KernelSU Patch
@@ -115,18 +115,57 @@ index 885f0b005adc..1d33c52f0d07 100644
  
  int do_execve_file(struct file *file, void *__argv, void *__envp)
 diff --git a/fs/namespace.c b/fs/namespace.c
-index f9e06e27eceb..87a757b2e06c 100644
+index 37b016b0a2f5..357336339610 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -1649,6 +1649,8 @@ static int can_umount(const struct path *path, int flags)
- {
- 	struct mount *mnt = real_mount(path->mnt);
+@@ -1645,13 +1645,40 @@ static inline bool may_mandlock(void)
+ }
+ #endif
  
+-/*
+- * Now umount can handle mount points as well as block devices.
+- * This is important for filesystems which use unnamed block devices.
+- *
+- * We now support a flag for forced unmount like the other 'big iron'
+- * unixes. Our API is identical to OSF/1 to avoid making a mess of AMD
+- */
++static int can_umount(const struct path *path, int flags)
++{
++	struct mount *mnt = real_mount(path->mnt);
++
 +	if (flags & ~(MNT_FORCE | MNT_DETACH | MNT_EXPIRE | UMOUNT_NOFOLLOW))
 +		return -EINVAL;
- 	if (!may_mount())
- 		return -EPERM;
- 	if (path->dentry != path->mnt->mnt_root)
++	if (!may_mount())
++		return -EPERM;
++	if (path->dentry != path->mnt->mnt_root)
++		return -EINVAL;
++	if (!check_mnt(mnt))
++		return -EINVAL;
++	if (mnt->mnt.mnt_flags & MNT_LOCKED) /* Check optimistically */
++		return -EINVAL;
++	if (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
++		return -EPERM;
++	return 0;
++}
++
++// caller is responsible for flags being sane
++int path_umount(struct path *path, int flags)
++{
++	struct mount *mnt = real_mount(path->mnt);
++	int ret;
++
++	ret = can_umount(path, flags);
++	if (!ret)
++		ret = do_umount(mnt, flags);
++
++	/* we mustn't call path_put() as that would clear mnt_expiry_mark */
++	dput(path->dentry);
++	mntput_no_expire(mnt);
++	return ret;
++}
+ 
+ int ksys_umount(char __user *name, int flags)
+ {
 diff --git a/fs/open.c b/fs/open.c
 index 76996f920ebf..68af05424840 100644
 --- a/fs/open.c
@@ -202,5 +241,5 @@ index 376543199b5a..9efdcc82cc25 100644
  		       AT_EMPTY_PATH | KSTAT_QUERY_FLAGS)) != 0)
  		return -EINVAL;
 -- 
-2.39.5
+2.51.0
 
