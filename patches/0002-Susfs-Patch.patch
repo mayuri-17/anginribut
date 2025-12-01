@@ -1,4 +1,4 @@
-From 21584a860f5ab5c41a64349509b9168f345ceca5 Mon Sep 17 00:00:00 2001
+From e2fd848579311dfa35b70b12d832d3fc66ec8a5b Mon Sep 17 00:00:00 2001
 From: Faris <90097027+rsuntk@users.noreply.github.com>
 Date: Wed, 22 Oct 2025 17:21:24 +0700
 Subject: [PATCH] BACKPORT: KernelSU: Implement SuspiciousFS (SusFS)
@@ -475,7 +475,7 @@ index 4c225cf97ae5..cfaab83c7d35 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 14e13f944cff..507f312ec082 100644
+index 3c961d780a4f..23eb1759f239 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -27,10 +27,36 @@
@@ -764,7 +764,7 @@ index 14e13f944cff..507f312ec082 100644
  	if (!mnt)
  		return ERR_PTR(-ENOMEM);
  
-@@ -2338,6 +2561,23 @@ static int do_loopback(struct path *path, const char *old_name,
+@@ -2304,6 +2527,23 @@ static int do_loopback(struct path *path, const char *old_name,
  		umount_tree(mnt, UMOUNT_SYNC);
  		unlock_mount_hash();
  	}
@@ -788,7 +788,7 @@ index 14e13f944cff..507f312ec082 100644
  out2:
  	unlock_mount(mp);
  out:
-@@ -3108,6 +3348,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
+@@ -3074,6 +3314,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE | CL_UNPRIVILEGED;
@@ -798,7 +798,7 @@ index 14e13f944cff..507f312ec082 100644
  	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
  	if (IS_ERR(new)) {
  		namespace_unlock();
-@@ -3227,7 +3470,14 @@ int ksys_mount(char __user *dev_name, char __user *dir_name, char __user *type,
+@@ -3193,7 +3436,14 @@ int ksys_mount(char __user *dev_name, char __user *dir_name, char __user *type,
  		goto out_data;
  
  	ret = do_mount(kernel_dev, dir_name, kernel_type, flags, options);
@@ -814,7 +814,7 @@ index 14e13f944cff..507f312ec082 100644
  	kfree(options);
  out_data:
  	kfree(kernel_dev);
-@@ -3691,3 +3941,41 @@ const struct proc_ns_operations mntns_operations = {
+@@ -3657,3 +3907,41 @@ const struct proc_ns_operations mntns_operations = {
  	.install	= mntns_install,
  	.owner		= mntns_owner,
  };
@@ -1792,7 +1792,7 @@ index 3c5ce8a0ddc9..7f87b76bc424 100644
  	if (error >= 0)
  		error = buf.error;
 diff --git a/fs/stat.c b/fs/stat.c
-index 9efdcc82cc25..fb238cc6e239 100644
+index c4027f08abcd..c42ce90bf39b 100644
 --- a/fs/stat.c
 +++ b/fs/stat.c
 @@ -17,10 +17,16 @@
@@ -3586,5 +3586,5 @@ index 70abbfbe6d93..a7d24f72b096 100644
  	audit_log_format(ab, " tclass=%s", secclass_map[tclass-1].name);
  }
 -- 
-2.51.2
+2.52.0
 
