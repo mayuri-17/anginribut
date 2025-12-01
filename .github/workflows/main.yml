@@ -25,8 +25,8 @@ on:
         default: 'main'
       kernelsu_susfs_repo:
         description: 'SUSFS repository to build'
-        required: true
-        default: 'rsuntk/KernelSU'
+        required: false
+        default: ''
       kernelsu_susfs_branch:
         description: 'SUSFS branch to build'
         required: true
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
-        build_type: ["normal", "ksu", "susfs"]
+        build_type: ["normal", "ksu"]
     container:
       image: wulan17/debian-aarch64:latest
     steps:
@@ -71,12 +71,77 @@ jobs:
           ssh-strict: "false"
 
       - name: Clone kernelsu
-        if: ${{ matrix.build_type == 'ksu' || matrix.build_type == 'susfs' }}
+        if: ${{ matrix.build_type == 'ksu' }}
         uses: actions/checkout@v4
         with:
-          repository: ${{ matrix.build_type == 'ksu' && github.event.inputs.kernelsu_repo || github.event.inputs.kernelsu_susfs_repo }}
+          repository: ${{ github.event.inputs.kernelsu_repo }}
           path: kernel/KernelSU
-          ref: ${{ matrix.build_type == 'ksu' && github.event.inputs.kernelsu_branch || github.event.inputs.kernelsu_susfs_branch }}
+          ref: ${{ github.event.inputs.kernelsu_branch }}
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-strict: "false"
+
+      - name: Write Config
+        run: bash build.sh write_config
+        env:
+          KERNEL_DEFCONFIG: ${{ github.event.inputs.kernel_defconfig }}
+          BUILD_TYPE: ${{ matrix.build_type }}
+          KERNEL_IMG: ${{ github.event.inputs.kernel_img }}
+          KERNEL_DTB: ${{ github.event.inputs.kernel_dtb }}
+
+      - name: Setup Clang
+        run: bash build.sh clang
+
+      - name: Build Kernel
+        run: bash build.sh kernel
+
+      - name: Compress AnyKernel
+        run: bash build.sh anykernel
+
+      - name: Upload logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.build_type }}-build-logs
+          path: Logs/
+
+      - name: Release kernel
+        run: bash build.sh release
+
+  build_susfs:
+    if: ${{ github.event.inputs.kernelsu_susfs_repo != '' }}
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        build_type: ["susfs"]
+    container:
+      image: wulan17/debian-aarch64:latest
+    steps:
+      - name: Checkout script
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt update && apt upgrade -y
+          apt install -y ccache wget bc build-essential make autoconf automake git bison pahole flex libssl-dev zip jq cpio aria2 gh
+
+      - name: Authenticate GitHub CLI
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Clone kernel
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.kernel_repo }}
+          path: kernel
+          ref: ${{ github.event.inputs.kernel_branch }}
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-strict: "false"
+
+      - name: Clone kernelsu (susfs)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.kernelsu_susfs_repo }}
+          path: kernel/KernelSU
+          ref: ${{ github.event.inputs.kernelsu_susfs_branch }}
           ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
           ssh-strict: "false"
 
