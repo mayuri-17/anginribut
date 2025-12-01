@@ -164,7 +164,7 @@ Workflows id: [$GITHUB_RUN_ID](https://github.com/$GITHUB_REPOSITORY/actions/run
             --title "$TITLE" \
             --notes "$NOTES" \
             --target "$GITHUB_REF_NAME" \
-            --repo "$REPO"
+            --repo "$REPO" || gh release upload "$TAG" "$ASSET" --repo "$REPO" --clobber || { echo "Release creation/upload failed!"; exit 1; }
     fi
     echo "Released successfully."
 }
