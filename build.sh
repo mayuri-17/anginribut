@@ -90,23 +90,26 @@ function do_kernel(){
 	if [[ "$B_TYPE" == "ksu" ]]; then
 		git am --3way "$BASE_DIR"/patches/0001-KernelSU-Patch.patch || { echo "Patch application failed!"; exit 1; }
 		write_ksu_config
+		NEW_LOCAL_VERSION_LINE="CONFIG_LOCALVERSION=\"$current_local_version"-"#\""
 		if [[ -n "$local_version_line" ]]; then
-			export LOCAL_VERSION="$current_local_version"-"#"
+			sed -i "s#^CONFIG_LOCALVERSION=.*#$NEW_LOCAL_VERSION_LINE#g" "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
 		else
-			export LOCAL_VERSION="-$KERNEL_NAME-#"
+			echo "$NEW_LOCAL_VERSION_LINE" >> "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
 		fi
 	elif [[ "$B_TYPE" == "susfs" ]]; then
 		git am --3way "$BASE_DIR"/patches/0001-KernelSU-Patch-no-reboot.patch || { echo "Patch application failed!"; exit 1; }
 		git am --3way "$BASE_DIR"/patches/0002-Susfs-Patch.patch || { echo "Patch application failed!"; exit 1; }
 		write_susfs_config
+		NEW_LOCAL_VERSION_LINE="CONFIG_LOCALVERSION=\"$current_local_version"-"#susfs\""
 		if [[ -n "$local_version_line" ]]; then
-			export LOCAL_VERSION="$current_local_version"-"ඞ"
+			sed -i "s#^CONFIG_LOCALVERSION=.*#$NEW_LOCAL_VERSION_LINE#g" "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
 		else
-			export LOCAL_VERSION="-$KERNEL_NAME-ඞ"
+			echo "$NEW_LOCAL_VERSION_LINE" >> "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
 		fi
 	else
 		if [[ -z "$local_version_line" ]]; then
-			export LOCAL_VERSION="-$KERNEL_NAME"
+			NEW_LOCAL_VERSION_LINE="CONFIG_LOCALVERSION=\"-$KERNEL_NAME\""
+			echo "$NEW_LOCAL_VERSION_LINE" >> "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
 		fi
 	fi
 	make O=../out CC=clang CXX=clang++ CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- CLANG_TRIPLE=aarch64-linux-gnu- LD=ld.lld LLVM=1 "$KERN_DEFCONFIG" || { echo "Defconfig failed!"; exit 1; }
