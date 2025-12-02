@@ -1,4 +1,4 @@
-From e2fd848579311dfa35b70b12d832d3fc66ec8a5b Mon Sep 17 00:00:00 2001
+From 148d7202aa7a4c4beee61ca86d52ba6f29aeb036 Mon Sep 17 00:00:00 2001
 From: Faris <90097027+rsuntk@users.noreply.github.com>
 Date: Wed, 22 Oct 2025 17:21:24 +0700
 Subject: [PATCH] BACKPORT: KernelSU: Implement SuspiciousFS (SusFS)

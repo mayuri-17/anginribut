@@ -96,7 +96,7 @@ function do_kernel(){
 			export LOCAL_VERSION="-$KERNEL_NAME-#"
 		fi
 	elif [[ "$B_TYPE" == "susfs" ]]; then
-		git am --3way "$BASE_DIR"/patches/0001-KernelSU-Patch.patch || { echo "Patch application failed!"; exit 1; }
+		git am --3way "$BASE_DIR"/patches/0001-KernelSU-Patch-no-reboot.patch || { echo "Patch application failed!"; exit 1; }
 		git am --3way "$BASE_DIR"/patches/0002-Susfs-Patch.patch || { echo "Patch application failed!"; exit 1; }
 		write_susfs_config
 		if [[ -n "$local_version_line" ]]; then
