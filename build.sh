@@ -37,8 +37,8 @@ function do_write_config() {
 	sed -i "s#export KERN_IMG#export KERN_IMG=\"$BASE_DIR/out/arch/$ARCH/boot/$KERNEL_IMG\"#g" "$BASE_DIR"/config.sh
 	sed -i "s#export DTB_PATH#export DTB_PATH=\"$BASE_DIR/out/arch/$ARCH/boot/dts/$KERNEL_DTB\"#g" "$BASE_DIR"/config.sh
 	sed -i "s#export KERN_DEFCONFIG#export KERN_DEFCONFIG=\"$KERNEL_DEFCONFIG\"#g" "$BASE_DIR"/config.sh
-	DTBO_NAME=$(grep '^CONFIG_BUILD_ARM64_DTB_OVERLAY_IMAGE_NAMES=' "$BASE_DIR"/arch/arm64/configs/"$KERNEL_DEFCONFIG"  | sed -n 's/^CONFIG_BUILD_ARM64_DTB_OVERLAY_IMAGE_NAMES="mediatek\/\([^"]*\)"/\1/p')
-	sed -i "s#export DTBO_PATH#export DTBO_PATH=\"$BASE_DIR/out/arch/$ARCH/boot/dts/$DTBO_NAME.dtbo\"#g" "$BASE_DIR"/config.sh
+	DTBO_NAME=$(grep '^CONFIG_BUILD_ARM64_DTB_OVERLAY_IMAGE_NAMES=' "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERNEL_DEFCONFIG" | sed -n 's/^CONFIG_BUILD_ARM64_DTB_OVERLAY_IMAGE_NAMES="mediatek\/\([^"]*\)"/\1/p')
+	sed -i "s#export DTBO_PATH#export DTBO_PATH=\"$BASE_DIR/out/arch/$ARCH/boot/dts/mediatek/$DTBO_NAME.dtbo\"#g" "$BASE_DIR"/config.sh
 }
 
 
@@ -92,17 +92,17 @@ function do_kernel(){
 		write_ksu_config
 		NEW_LOCAL_VERSION_LINE="CONFIG_LOCALVERSION=\"$current_local_version"-"#\""
 		if [[ -n "$local_version_line" ]]; then
-			sed -i "s#^CONFIG_LOCALVERSION=.*#$NEW_LOCAL_VERSION_LINE#g" "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
+			sed -i "s#^CONFIG_LOCALVERSION=$current_local_version#$NEW_LOCAL_VERSION_LINE#g" "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
 		else
 			echo "$NEW_LOCAL_VERSION_LINE" >> "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
 		fi
 	elif [[ "$B_TYPE" == "susfs" ]]; then
-		git am --3way "$BASE_DIR"/patches/0001-KernelSU-Patch-no-reboot.patch || { echo "Patch application failed!"; exit 1; }
+		git am --3way "$BASE_DIR"/patches/0001-KernelSU-Patch.patch || { echo "Patch application failed!"; exit 1; }
 		git am --3way "$BASE_DIR"/patches/0002-Susfs-Patch.patch || { echo "Patch application failed!"; exit 1; }
 		write_susfs_config
 		NEW_LOCAL_VERSION_LINE="CONFIG_LOCALVERSION=\"$current_local_version"-"#susfs\""
 		if [[ -n "$local_version_line" ]]; then
-			sed -i "s#^CONFIG_LOCALVERSION=.*#$NEW_LOCAL_VERSION_LINE#g" "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
+			sed -i "s#^CONFIG_LOCALVERSION=$current_local_version#$NEW_LOCAL_VERSION_LINE#g" "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
 		else
 			echo "$NEW_LOCAL_VERSION_LINE" >> "$BASE_DIR"/kernel/arch/"$ARCH"/configs/"$KERN_DEFCONFIG"
 		fi

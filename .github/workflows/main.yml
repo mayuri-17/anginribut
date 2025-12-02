@@ -30,7 +30,7 @@ on:
       kernelsu_susfs_branch:
         description: 'SUSFS branch to build'
         required: true
-        default: 'susfs-main'
+        default: 'susfs-rksu-master'
       kernel_img:
         description: 'Kernel image name'
         required: false
